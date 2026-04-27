@@ -105,7 +105,7 @@ tr:last-child td{border-bottom:none}
 <script>
 var TEAM=['Silvio','Ale','Héctor','Fabián','Inés','Juan','Luna'];
 var BRANCHES=['Americana','Esquina','Casissa','Sarandi','Dominico','Maga2','Bernal','Moreno','Del Este','Nueva Era','Tufarmacia','Maly','Varela','Rotonda'];
-var GAS_URL='https://script.google.com/macros/s/AKfycbyqdIJz23qgmnS23O-3P72tllJ4SLUcHrRkwFppdJlFgR_dVwXhhD6pKD3aENpK4kLD/exec';
+var GAS_URL='https://script.google.com/macros/s/AKfycbzqIE6RD_OwdIkmeKdgwRMOw6-AyOZMfESsHLli6XmO-LrbVmEEgrlwlxTa745PK9QX/exec';
 
 var DAYS=['L','M','X','J','V'];
 var DFULL={L:'Lunes',M:'Martes',X:'Miércoles',J:'Jueves',V:'Viernes'};
@@ -136,10 +136,10 @@ function sync(state,msg){
   else d.classList.add('err');
 }
 
-/* GAS storage - using no-cors mode for POST via form trick */
+/* GAS storage - GET only to avoid CORS issues */
 function gasGet(key){
   sync('spin','cargando...');
-  return fetch(GAS_URL+'?key='+encodeURIComponent(key))
+  return fetch(GAS_URL+'?action=get&key='+encodeURIComponent(key))
     .then(function(r){return r.json();})
     .then(function(data){sync('ok','conectado');return data;})
     .catch(function(e){sync('err','sin conexión');throw e;});
@@ -147,11 +147,9 @@ function gasGet(key){
 
 function gasPost(key,value){
   sync('spin','guardando...');
-  return fetch(GAS_URL,{
-    method:'POST',
-    headers:{'Content-Type':'text/plain'},
-    body:JSON.stringify({key:key,value:value})
-  }).then(function(r){return r.text();})
+  var encoded=encodeURIComponent(JSON.stringify(value));
+  return fetch(GAS_URL+'?action=set&key='+encodeURIComponent(key)+'&value='+encoded)
+    .then(function(r){return r.text();})
     .then(function(){sync('ok','guardado ✓');})
     .catch(function(e){sync('err','error');throw e;});
 }
