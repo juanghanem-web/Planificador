@@ -64,7 +64,13 @@ tr:last-child td{border-bottom:none}
 </head>
 <body>
 <div class="hdr">
-  <div><h1>📍 Planificador de Visitas</h1><p id="wklbl">...</p></div>
+  <div><h1>📍 Planificador de Visitas</h1>
+    <div style="display:flex;align-items:center;gap:6px;margin-top:3px">
+      <button id="prevWeek" style="background:rgba(255,255,255,0.15);border:none;color:#fff;border-radius:6px;width:22px;height:22px;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0">‹</button>
+      <p id="wklbl" style="margin:0">...</p>
+      <button id="nextWeek" style="background:rgba(255,255,255,0.15);border:none;color:#fff;border-radius:6px;width:22px;height:22px;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0">›</button>
+    </div>
+  </div>
   <div style="display:flex;align-items:center;gap:6px">
     <span style="font-size:10px;color:rgba(255,255,255,0.55)" id="slbl">conectando</span>
     <div class="sdot spin" id="sdot"></div>
@@ -119,7 +125,7 @@ var exDay=null;
 var wkMon,wkKey;
 
 /* week */
-function nextMon(){var d=new Date(),day=d.getDay(),diff=((8-day)%7)||7;d.setDate(d.getDate()+diff);d.setHours(0,0,0,0);return d;}
+function nextMon(){var d=new Date(),day=d.getDay(),diff=day===0?-6:1-day;d.setDate(d.getDate()+diff);d.setHours(0,0,0,0);return d;}
 function wkKy(d){return d.getFullYear()+'-'+p2(d.getMonth()+1)+'-'+p2(d.getDate());}
 function p2(n){return String(n).padStart(2,'0');}
 function wkLbl(m){var f=new Date(m);f.setDate(m.getDate()+4);var mo=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];return 'Semana '+m.getDate()+' – '+f.getDate()+' '+mo[f.getMonth()]+' '+f.getFullYear();}
@@ -307,7 +313,18 @@ document.getElementById('refreshBtn').addEventListener('click',function(){loadAl
 /* init */
 wkMon=nextMon();wkKey=wkKy(wkMon);
 document.getElementById('wklbl').textContent=wkLbl(wkMon);
-// Load current user's schedule on start (just verify connection)
+
+function changeWeek(delta){
+  wkMon=new Date(wkMon);wkMon.setDate(wkMon.getDate()+delta*7);
+  wkKey=wkKy(wkMon);
+  document.getElementById('wklbl').textContent=wkLbl(wkMon);
+  allScheds={};myDraft={};curUser='';exDay=null;
+  gasGet('ping').then(function(){sync('ok','conectado');}).catch(function(){sync('err','sin conexión');});
+  sv('Plan');
+}
+document.getElementById('prevWeek').addEventListener('click',function(){changeWeek(-1);});
+document.getElementById('nextWeek').addEventListener('click',function(){changeWeek(1);});
+
 gasGet('ping').then(function(){sync('ok','conectado');}).catch(function(){sync('err','sin conexión');});
 sv('Plan');
 </script>
