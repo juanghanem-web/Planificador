@@ -105,7 +105,7 @@ tr:last-child td{border-bottom:none}
 <script>
 var TEAM=['Silvio','Ale','Héctor','Fabián','Inés','Juan','Luna'];
 var BRANCHES=['Americana','Esquina','Casissa','Sarandi','Dominico','Maga2','Bernal','Moreno','Del Este','Nueva Era','Tufarmacia','Maly','Varela','Rotonda'];
-var GAS_URL='https://script.google.com/macros/s/AKfycbzqIE6RD_OwdIkmeKdgwRMOw6-AyOZMfESsHLli6XmO-LrbVmEEgrlwlxTa745PK9QX/exec';
+var GAS_URL='https://script.google.com/macros/s/AKfycbw8I1GjNrZtdFqSr0o5eKl23n8yXhS4XRrYU_QqhWwMk6mpgisHqZeVJACvqU9d75Oy/exec';
 
 var DAYS=['L','M','X','J','V'];
 var DFULL={L:'Lunes',M:'Martes',X:'Miércoles',J:'Jueves',V:'Viernes'};
@@ -136,20 +136,29 @@ function sync(state,msg){
   else d.classList.add('err');
 }
 
-/* GAS storage - GET only to avoid CORS issues */
+/* GAS storage via JSONP - bypasses CORS completely */
+function jsonp(url){
+  return new Promise(function(resolve,reject){
+    var cb='cb'+Date.now()+Math.floor(Math.random()*9999);
+    var s=document.createElement('script');
+    var timer=setTimeout(function(){delete window[cb];s.parentNode&&s.parentNode.removeChild(s);reject(new Error('timeout'));},12000);
+    window[cb]=function(data){clearTimeout(timer);delete window[cb];s.parentNode&&s.parentNode.removeChild(s);resolve(data);};
+    s.onerror=function(){clearTimeout(timer);delete window[cb];s.parentNode&&s.parentNode.removeChild(s);reject(new Error('error'));};
+    s.src=url+'&callback='+cb;
+    document.body.appendChild(s);
+  });
+}
+
 function gasGet(key){
   sync('spin','cargando...');
-  return fetch(GAS_URL+'?action=get&key='+encodeURIComponent(key))
-    .then(function(r){return r.json();})
+  return jsonp(GAS_URL+'?action=get&key='+encodeURIComponent(key))
     .then(function(data){sync('ok','conectado');return data;})
     .catch(function(e){sync('err','sin conexión');throw e;});
 }
 
 function gasPost(key,value){
   sync('spin','guardando...');
-  var encoded=encodeURIComponent(JSON.stringify(value));
-  return fetch(GAS_URL+'?action=set&key='+encodeURIComponent(key)+'&value='+encoded)
-    .then(function(r){return r.text();})
+  return jsonp(GAS_URL+'?action=set&key='+encodeURIComponent(key)+'&value='+encodeURIComponent(JSON.stringify(value)))
     .then(function(){sync('ok','guardado ✓');})
     .catch(function(e){sync('err','error');throw e;});
 }
